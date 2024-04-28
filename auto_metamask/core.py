@@ -47,31 +47,21 @@ def setupWebdriver(metamask_path):
 
     :param metamask_path: Extension file path
     :type metamask_path: String
-    :param chrome_path: Chrome browser path, default is None.
-    :type chrome_path: String
-    :param version: Chrome browser version, make sure it matches the chromedriver version, if not provided, the latest version will be used, default is None. if chromedriver_path is provided, this parameter will be ignored.
-    :type version: String
-    :param chromedriver_path: Chromedriver file path, default is None.
-    :type chromedriver_path: String
     :return: Selenium Chrome WebDriver
     :rtype: WebDriver
     """
 
     options = Options()
-    # options.add_argument('--start-maximized')
-    options.add_argument("--window-size=1440,900")
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--headless')
 
     # Chrome is controlled by automated test software
     # options.binary_location = "/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev"
     options.add_experimental_option('excludeSwitches', ['enable-automation'])
     options.add_experimental_option('useAutomationExtension', False)
     options.add_extension(metamask_path)
-    s = Service(ChromeDriverManager().install())
 
     global driver
-    driver = webdriver.Chrome(service=s, options=options)
+    driver = webdriver.Chrome(options=options)
 
     # Selenium Stealth settings
     stealth(driver,
