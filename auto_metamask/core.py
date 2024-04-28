@@ -42,7 +42,7 @@ def downloadMetamask(url):
     return local_filename
 
 
-def setupWebdriver(metamask_path, chrome_path=None, version=None, chromedriver_path=None):
+def setupWebdriver(metamask_path):
     """Initialize chrome browser and install metamask extension
 
     :param metamask_path: Extension file path
@@ -68,19 +68,8 @@ def setupWebdriver(metamask_path, chrome_path=None, version=None, chromedriver_p
     options.add_experimental_option('excludeSwitches', ['enable-automation'])
     options.add_experimental_option('useAutomationExtension', False)
     options.add_extension(metamask_path)
-    if chrome_path and version:
-        if os.path.exists(chrome_path):
-            options.binary_location = chrome_path
-            logging.info("Chrome path is " + chrome_path + ", version is " + version)
-        else:
-            logging.warning("Chrome path not found")
-    else:
-        logging.warning("Chrome path or version not provided, using default")
+    s = Service(ChromeDriverManager().install())
 
-    if chromedriver_path:
-        s = Service(chromedriver_path)
-    else:
-        s = Service(ChromeDriverManager(version=version, path=chromedriver_path).install())
     global driver
     driver = webdriver.Chrome(service=s, options=options)
 
