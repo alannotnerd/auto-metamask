@@ -60,8 +60,11 @@ def setupWebdriver(metamask_path):
 
     # Chrome is controlled by automated test software
     # options.binary_location = "/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev"
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option(
+        "excludeSwitches", ["enable-automation", "disable-popup-blocking"]
+    )
     options.add_experimental_option("useAutomationExtension", False)
+    options.add_experimental_option("detach", True)
     options.add_extension(metamask_path)
 
     global driver
@@ -258,26 +261,19 @@ def setupMetamask(recovery_phrase, password):
         )
     ).click()
 
-    try:
-        wait.until(
-            EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, "button[data-testid='popover-close']")
-            )
-        ).click()
-    except Exception:
-        logging.warning("No welcome popover")
-        return
-
-    try:
-        # This button is only available when the popup is closed
-        wait.until(
-            EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, "button[data-testid='eth-overview-send']")
-            )
-        )
-    except Exception:
-        logging.error("Setup failed")
-        return
+    while True:
+        try:
+            wait.until(
+                EC.element_to_be_clickable(
+                    (
+                        By.CSS_SELECTOR,
+                        "div.mm-modal div[data-focus-lock-disabled=false] section button.mm-button-primary.mm-box--rounded-pill",
+                    )
+                )
+            ).click()
+            break
+        except:  # noqa: E722
+            pass
 
     logging.info("Setup success")
 
