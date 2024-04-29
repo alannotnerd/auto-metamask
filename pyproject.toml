@@ -6,7 +6,7 @@ authors = ["Alan WANG <alan1995wang@outlook.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.11"
 selenium-stealth = "^1.0.6"
 selenium = "^4.20.0"
 webdriver-manager = "^4.0.1"

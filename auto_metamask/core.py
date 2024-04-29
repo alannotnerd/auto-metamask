@@ -16,8 +16,12 @@ from webdriver_manager.chrome import ChromeDriverManager
 file_path = os.getcwd()
 log_format = "%(asctime)s %(levelname)s %(message)s"
 date_format = "%m-%d-%Y %H:%M:%S"
-logging.basicConfig(filename=file_path+"/auto-metamask.log", level=logging.INFO,
-                    format=log_format, datefmt=date_format)
+logging.basicConfig(
+    filename=file_path + "/auto-metamask.log",
+    level=logging.INFO,
+    format=log_format,
+    datefmt=date_format,
+)
 
 
 def downloadMetamask(url):
@@ -29,14 +33,14 @@ def downloadMetamask(url):
     :rtype: String
     """
     logging.info("Downloading metamask...")
-    local_filename = file_path + '/' + url.split('/')[-1]
+    local_filename = file_path + "/" + url.split("/")[-1]
 
     if os.path.exists(local_filename):
         logging.info("Metamask " + local_filename + " found in cache")
         return local_filename
 
     with requests.get(url, stream=True) as r:
-        with open(local_filename, 'wb') as f:
+        with open(local_filename, "wb") as f:
             shutil.copyfileobj(r.raw, f)
 
     return local_filename
@@ -52,26 +56,27 @@ def setupWebdriver(metamask_path):
     """
 
     options = Options()
-    options.add_argument('--headless')
+    # options.add_argument("--headless")
 
     # Chrome is controlled by automated test software
     # options.binary_location = "/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev"
-    options.add_experimental_option('excludeSwitches', ['enable-automation'])
-    options.add_experimental_option('useAutomationExtension', False)
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
     options.add_extension(metamask_path)
 
     global driver
     driver = webdriver.Chrome(options=options)
 
     # Selenium Stealth settings
-    stealth(driver,
-            languages=['en-US', 'en'],
-            vendor='Google Inc.',
-            platform='Win32',
-            webgl_vendor='Intel Inc.',
-            renderer='Intel Iris OpenGL Engine',
-            fix_hairline=True,
-            )
+    stealth(
+        driver,
+        languages=["en-US", "en"],
+        vendor="Google Inc.",
+        platform="Win32",
+        webgl_vendor="Intel Inc.",
+        renderer="Intel Iris OpenGL Engine",
+        fix_hairline=True,
+    )
 
     global wait
     wait = WebDriverWait(driver, 20, 1)
@@ -88,10 +93,10 @@ def setupWebdriver(metamask_path):
     metamask_handle = driver.window_handles[1]
 
     driver.switch_to.window(metamask_handle)
-    wait.until(EC.url_contains('home'))
+    wait.until(EC.url_contains("home"))
 
     global metamask_url
-    metamask_url = driver.current_url.split('#')[0]
+    metamask_url = driver.current_url.split("#")[0]
 
     return driver
 
@@ -105,20 +110,27 @@ def switchPage(func):
         driver.get(metamask_url)
 
         try:
-            wait_fast.until(EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, "button[data-testid='popover-close']"))).click()
+            wait_fast.until(
+                EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "button[data-testid='popover-close']")
+                )
+            ).click()
         except Exception:
             logging.warning("No popover")
 
         func(*args, **kwargs)
 
         try:
-            wait_fast.until(EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, "button[data-testid='popover-close']"))).click()
+            wait_fast.until(
+                EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "button[data-testid='popover-close']")
+                )
+            ).click()
         except Exception:
             logging.warning("No popover")
 
         driver.switch_to.window(current_handle)
+
     return switch
 
 
@@ -132,30 +144,51 @@ def setupMetamask(recovery_phrase, password):
     :type password: String
     """
 
-    wait_slow.until(EC.invisibility_of_element_located(
-        (By.CSS_SELECTOR, "div[class='loading-overlay__container']")))
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "input[data-testid='onboarding-terms-checkbox']"))).click()
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "button[data-testid='onboarding-import-wallet']"))).click()
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "button[data-testid='metametrics-no-thanks']"))).click()
+    wait_slow.until(
+        EC.invisibility_of_element_located(
+            (By.CSS_SELECTOR, "div[class='loading-overlay__container']")
+        )
+    )
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "input[data-testid='onboarding-terms-checkbox']")
+        )
+    ).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='onboarding-import-wallet']")
+        )
+    ).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='metametrics-no-thanks']")
+        )
+    ).click()
 
     # Split the recovery phrase into individual words
-    words = recovery_phrase.split(' ')
+    words = recovery_phrase.split(" ")
     word_count = len(words)
 
     # Check if the length of the words is valid
     if word_count not in [12, 15, 18, 21, 24]:
         logging.error(
-            "Invalid recovery phrase. The phrase should be 12, 15, 18, 21, or 24 words long.")
+            "Invalid recovery phrase. The phrase should be 12, 15, 18, 21, or 24 words long."
+        )
     else:
         # Select the dropdown
         # //*[@id="app-content"]/div/div[2]/div/div/div/div[4]/div/div/div[2]/select
         # //*[contains(@class, 'dropdown__select')]
         # //div[@class='import-srp__container']//select[@class='dropdown__select']
-        select = Select(wait.until(EC.element_to_be_clickable(
-            (By.XPATH, "//div[@class='import-srp__container']//select[@class='dropdown__select']"))))
+        select = Select(
+            wait.until(
+                EC.element_to_be_clickable(
+                    (
+                        By.XPATH,
+                        "//div[@class='import-srp__container']//select[@class='dropdown__select']",
+                    )
+                )
+            )
+        )
 
         # Select option by value (number of words)
         select.select_by_value(str(word_count))
@@ -165,59 +198,88 @@ def setupMetamask(recovery_phrase, password):
             word = words[i]
 
             # Input the word into the field
-            wait.until(EC.visibility_of_element_located(
-                (By.CSS_SELECTOR, f"input[data-testid='import-srp__srp-word-{i}']"))).send_keys(word)
+            wait.until(
+                EC.visibility_of_element_located(
+                    (By.CSS_SELECTOR, f"input[data-testid='import-srp__srp-word-{i}']")
+                )
+            ).send_keys(word)
 
     # Click the confirm button
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "button[data-testid='import-srp-confirm']"))).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='import-srp-confirm']")
+        )
+    ).click()
 
     # find the password input and type the password
     new_password = wait.until(
-        EC.visibility_of_element_located((By.CSS_SELECTOR, "input[data-testid='create-password-new']")))
+        EC.visibility_of_element_located(
+            (By.CSS_SELECTOR, "input[data-testid='create-password-new']")
+        )
+    )
     new_password.send_keys(password)
 
     # find the confirm password input and type the password
     confirm_password = wait.until(
-        EC.visibility_of_element_located((By.CSS_SELECTOR, "input[data-testid='create-password-confirm']")))
+        EC.visibility_of_element_located(
+            (By.CSS_SELECTOR, "input[data-testid='create-password-confirm']")
+        )
+    )
     confirm_password.send_keys(password)
 
     # find the terms checkbox and click
     terms_checkbox = driver.find_element(
-        By.CSS_SELECTOR, "input[data-testid='create-password-terms']")
+        By.CSS_SELECTOR, "input[data-testid='create-password-terms']"
+    )
     terms_checkbox.click()
 
     # find the submit button and click
     submit_button = driver.find_element(
-        By.CSS_SELECTOR, "button[data-testid='create-password-import']")
+        By.CSS_SELECTOR, "button[data-testid='create-password-import']"
+    )
     submit_button.click()
 
     # find the all done button and click
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "button[data-testid='onboarding-complete-done']"))).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='onboarding-complete-done']")
+        )
+    ).click()
 
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "button[data-testid='pin-extension-next']"))).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='pin-extension-next']")
+        )
+    ).click()
 
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "button[data-testid='pin-extension-done']"))).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='pin-extension-done']")
+        )
+    ).click()
 
     try:
-        wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "button[data-testid='popover-close']"))).click()
+        wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "button[data-testid='popover-close']")
+            )
+        ).click()
     except Exception:
         logging.warning("No welcome popover")
         return
 
     try:
         # This button is only available when the popup is closed
-        wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "button[data-testid='eth-overview-send']")))
+        wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "button[data-testid='eth-overview-send']")
+            )
+        )
     except Exception:
         logging.error("Setup failed")
         return
 
-    logging.info('Setup success')
+    logging.info("Setup success")
 
 
 @switchPage
@@ -235,7 +297,7 @@ def addNetwork(network_name, rpc_url, chain_id, currency_symbol):
     """
 
     # Switch to the settings page
-    driver.get(metamask_url + '#settings/networks/add-network')
+    driver.get(metamask_url + "#settings/networks/add-network")
 
     # network-display
     # wait.until(EC.element_to_be_clickable(
@@ -246,24 +308,39 @@ def addNetwork(network_name, rpc_url, chain_id, currency_symbol):
     #     (By.XPATH, "//div[contains(@class, 'multichain-network-list-menu-content-wrapper')]//button[contains(@class, 'mm-button-secondary')]"))).click()
 
     inputs = wait.until(
-        EC.visibility_of_all_elements_located((By.XPATH, "//div[@class='networks-tab__add-network-form-body']//input")))
+        EC.visibility_of_all_elements_located(
+            (By.XPATH, "//div[@class='networks-tab__add-network-form-body']//input")
+        )
+    )
 
     inputs[0].send_keys(network_name)
     inputs[1].send_keys(rpc_url)
     inputs[2].send_keys(chain_id)
     inputs[3].send_keys(currency_symbol)
 
-    wait.until(EC.element_to_be_clickable(
-        (By.XPATH, "//div[contains(@class, 'networks-tab__add-network-form-footer')]//button[contains(@class, 'btn-primary')]"))).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (
+                By.XPATH,
+                "//div[contains(@class, 'networks-tab__add-network-form-footer')]//button[contains(@class, 'btn-primary')]",
+            )
+        )
+    ).click()
 
     try:
-        wait.until(EC.element_to_be_clickable(
-            (By.XPATH, "//button[contains(@class, 'home__new-network-added__switch-to-button')]"))).click()
+        wait.until(
+            EC.element_to_be_clickable(
+                (
+                    By.XPATH,
+                    "//button[contains(@class, 'home__new-network-added__switch-to-button')]",
+                )
+            )
+        ).click()
     except Exception:
         logging.error("Add network failed")
         return
 
-    logging.info('Add network success')
+    logging.info("Add network success")
 
 
 @switchPage
@@ -274,34 +351,42 @@ def changeNetwork(network_name):
     :type network_name: String
     """
 
-    logging.info('Change network')
+    logging.info("Change network")
 
     # display the network list
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "button[data-testid='network-display']"))).click()
-
-
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='network-display']")
+        )
+    ).click()
 
     try:
-        wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "label.toggle-button"))).click()
+        wait.until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "label.toggle-button"))
+        ).click()
 
     except Exception:
         logging.error("no need to show test networks")
 
     # click the network name
-    wait.until(EC.presence_of_element_located(
-        (By.XPATH, "//span[text()='{}']".format(network_name)))).click()
+    wait.until(
+        EC.presence_of_element_located(
+            (By.XPATH, "//span[text()='{}']".format(network_name))
+        )
+    ).click()
 
     try:
         # check if the network is changed
-        wait.until(EC.element_to_be_clickable(
-            (By.XPATH, "//p[text()='{}']".format(network_name))))
+        wait.until(
+            EC.element_to_be_clickable(
+                (By.XPATH, "//p[text()='{}']".format(network_name))
+            )
+        )
     except Exception:
         logging.error("Change network failed")
         return
 
-    logging.info('Change network success')
+    logging.info("Change network success")
 
 
 @switchPage
@@ -313,76 +398,108 @@ def importPK(priv_key):
     """
 
     # Click the account menu
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "button[data-testid='account-menu-icon']"))).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='account-menu-icon']")
+        )
+    ).click()
     # Click the import account button
-    wait.until(EC.element_to_be_clickable(
-        (By.XPATH, "(//section[contains(@class, 'multichain-account-menu-popover')]//button[contains(@class, 'mm-button-base--size-sm')])[2]"))).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (
+                By.XPATH,
+                "(//section[contains(@class, 'multichain-account-menu-popover')]//button[contains(@class, 'mm-button-base--size-sm')])[2]",
+            )
+        )
+    ).click()
 
-    key_input = wait.until(EC.visibility_of_element_located(
-        (By.CSS_SELECTOR, '#private-key-box')))
+    key_input = wait.until(
+        EC.visibility_of_element_located((By.CSS_SELECTOR, "#private-key-box"))
+    )
 
     key_input.send_keys(priv_key)
 
     # Click the import button
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "button[data-testid='import-account-confirm-button']"))).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='import-account-confirm-button']")
+        )
+    ).click()
 
     try:
         # This button is only available when the popup is closed
-        wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "button[data-testid='eth-overview-send']")))
+        wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "button[data-testid='eth-overview-send']")
+            )
+        )
     except Exception:
         logging.error("Import PK failed")
         return
 
-    logging.info('Import PK success')
+    logging.info("Import PK success")
 
 
 @switchPage
 def connect():
-    """Connect wallet
-    """
+    """Connect wallet"""
 
     # Next
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "button[data-testid='page-container-footer-next']"))).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='page-container-footer-next']")
+        )
+    ).click()
 
     # Confirm
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "button[data-testid='page-container-footer-next']"))).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='page-container-footer-next']")
+        )
+    ).click()
 
     try:
         # This button is only available when the popup is closed
-        wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "button[data-testid='eth-overview-send']")))
+        wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "button[data-testid='eth-overview-send']")
+            )
+        )
     except Exception:
         logging.error("Connect wallet failed")
         return
 
-    logging.info('Connect wallet successfully')
+    logging.info("Connect wallet successfully")
 
 
 @switchPage
 def approve():
-    """Approve wallet
-    """
+    """Approve wallet"""
 
-    wait.until(EC.element_to_be_clickable(
-        (By.XPATH, "//button[contains(@class, 'btn-primary')]"))).click()
-    
-    wait.until(EC.element_to_be_clickable(
-        (By.XPATH, "//button[contains(@class, 'btn-primary')]"))).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.XPATH, "//button[contains(@class, 'btn-primary')]")
+        )
+    ).click()
+
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.XPATH, "//button[contains(@class, 'btn-primary')]")
+        )
+    ).click()
 
     try:
         # This button is only available when the popup is closed
-        wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "button[data-testid='eth-overview-send']")))
+        wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "button[data-testid='eth-overview-send']")
+            )
+        )
     except Exception:
         logging.error("Approve failed")
         return
 
-    logging.info('Approve successfully')
+    logging.info("Approve successfully")
 
 
 @switchPage
@@ -394,38 +511,52 @@ def approveTokens(cap=None):
     """
 
     try:
-        wait_fast.until(EC.element_to_be_clickable(
-        (By.XPATH, "//button[text()='Use default']")))
+        wait_fast.until(
+            EC.element_to_be_clickable((By.XPATH, "//button[text()='Use default']"))
+        )
     except Exception:
-        logging.warning('Refresh page')
+        logging.warning("Refresh page")
         driver.refresh()
 
     if cap:
         if isinstance(cap, int) and cap > 0:
-            wait.until(EC.visibility_of_element_located(
-                (By.CSS_SELECTOR, "input[id='custom-spending-cap']"))).send_keys(str(cap))
+            wait.until(
+                EC.visibility_of_element_located(
+                    (By.CSS_SELECTOR, "input[id='custom-spending-cap']")
+                )
+            ).send_keys(str(cap))
         else:
             logging.error("Invalid cap")
             return
     else:
-        wait.until(EC.element_to_be_clickable(
-            (By.XPATH, "//button[text()='Use default']"))).click()
-    
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "button[data-testid='page-container-footer-next']"))).click()
-    
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "button[data-testid='page-container-footer-next']"))).click()
+        wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//button[text()='Use default']"))
+        ).click()
+
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='page-container-footer-next']")
+        )
+    ).click()
+
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='page-container-footer-next']")
+        )
+    ).click()
 
     try:
         # This button is only available when the popup is closed
-        wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "button[data-testid='eth-overview-send']")))
+        wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "button[data-testid='eth-overview-send']")
+            )
+        )
     except Exception:
         logging.error("Approve failed")
         return
 
-    logging.info('Approve successfully')
+    logging.info("Approve successfully")
 
 
 @switchPage
@@ -436,23 +567,32 @@ def confirm():
     """
 
     try:
-        wait_fast.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "button[data-testid='page-container-footer-next']")))
+        wait_fast.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "button[data-testid='page-container-footer-next']")
+            )
+        )
     except Exception:
-        logging.warning('Refresh page')
+        logging.warning("Refresh page")
         driver.refresh()
 
-    wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "button[data-testid='page-container-footer-next']"))).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[data-testid='page-container-footer-next']")
+        )
+    ).click()
 
     try:
-        wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "button[data-testid='eth-overview-send']")))
+        wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "button[data-testid='eth-overview-send']")
+            )
+        )
     except Exception:
         logging.error("Connect wallet failed")
         return
 
-    logging.info('Sign successfully')
+    logging.info("Sign successfully")
 
 
 @switchPage
@@ -463,8 +603,11 @@ def waitPending(timeout=40):
     :type timeout: Number
     """
 
-    wait.until(EC.element_to_be_clickable(
-        (By.CSS_SELECTOR, "li[data-testid='home__activity-tab']"))).click()
+    wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "li[data-testid='home__activity-tab']")
+        )
+    ).click()
 
     try:
         if timeout and isinstance(timeout, int):
@@ -472,13 +615,17 @@ def waitPending(timeout=40):
         else:
             wait_temp = WebDriverWait(driver, 40, 1)
 
-        wait_temp.until_not(EC.visibility_of_any_elements_located(
-            (By.CSS_SELECTOR, '.transaction-status-label--pending')))
+        wait_temp.until_not(
+            EC.visibility_of_any_elements_located(
+                (By.CSS_SELECTOR, ".transaction-status-label--pending")
+            )
+        )
     except Exception:
         logging.error("Wait pending failed or timeout")
         return
 
-    logging.info('Wait pending successfully')
+    logging.info("Wait pending successfully")
+
 
 @switchPage
 def disconnect():
@@ -487,15 +634,30 @@ def disconnect():
     :return:
     """
     try:
-        wait.until(EC.element_to_be_clickable(
-            (By.XPATH, "//button[@data-testid='account-options-menu-button']"))).click()
-        wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "button[data-testid='global-menu-connected-sites'"))).click()
-        wait.until(EC.element_to_be_clickable(
-            (By.XPATH, '//*[@id="popover-content"]/div/div/section/div[2]/main/div/a'))).click()
-        wait.until(EC.element_to_be_clickable(
-            (By.XPATH, "//button[contains(text(),'Disconnect')]"))).click()
-        logging.info('Disconnect successfully')
+        wait.until(
+            EC.element_to_be_clickable(
+                (By.XPATH, "//button[@data-testid='account-options-menu-button']")
+            )
+        ).click()
+        wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "button[data-testid='global-menu-connected-sites'")
+            )
+        ).click()
+        wait.until(
+            EC.element_to_be_clickable(
+                (
+                    By.XPATH,
+                    '//*[@id="popover-content"]/div/div/section/div[2]/main/div/a',
+                )
+            )
+        ).click()
+        wait.until(
+            EC.element_to_be_clickable(
+                (By.XPATH, "//button[contains(text(),'Disconnect')]")
+            )
+        ).click()
+        logging.info("Disconnect successfully")
     except Exception:
-        logging.warning('Disconnect failed')
+        logging.warning("Disconnect failed")
         return
